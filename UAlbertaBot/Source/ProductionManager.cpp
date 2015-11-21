@@ -125,6 +125,8 @@ void ProductionManager::update()
         {
 		    BWAPI::Broodwar->printf("Supply deadlock detected, building supply!");
         }
+		BWAPI::Broodwar->printf("Supply deadlock detected, building supply!");
+
 		queue.queueAsHighestPriority(MetaType(BWAPI::Broodwar->self()->getRace().getSupplyProvider()), true);
 	}
 
@@ -460,9 +462,30 @@ bool ProductionManager::detectBuildOrderDeadlock()
 		return false;
 	}
 
+
 	// are any supply providers being built currently
-	bool supplyInProgress =		BuildingManager::Instance().isBeingBuilt(BWAPI::Broodwar->self()->getRace().getCenter()) || 
-								BuildingManager::Instance().isBeingBuilt(BWAPI::Broodwar->self()->getRace().getSupplyProvider());
+	// Randy: issues occurs when a building is set to be built, but probe dies before it can build it
+	// while this could also happen to pylons, and is less efficient because we do not consider the supply gained by
+	// the centers, this is safer to avoid deadlocks created by attempting and failing the first expansion
+	bool supplyInProgress = BuildingManager::Instance().isBeingBuilt(BWAPI::Broodwar->self()->getRace().getSupplyProvider());
+	//BuildingManager::Instance().isBeingBuilt(BWAPI::Broodwar->self()->getRace().getCenter()) || 
+	//BWAPI::Broodwar->printf("%d", supplyInProgress);
+
+	// Randy: incase there is a deadlock anyways, we also have a long time check, could be tuned to be better
+    // but should suffice because it should only deadlock when a probe trying to kill a pylon happens to die, which
+	// tends to be rare.
+	if (supplyInProgress){
+		++time_check;
+	}
+	else {
+		time_check = 0;
+	}
+
+	if (time_check > 200) {
+		time_check = 0;
+		return true;
+	}
+
 
     for (BWAPI::UnitInterface * unit : BWAPI::Broodwar->self()->getUnits())
     {
@@ -480,6 +503,8 @@ bool ProductionManager::detectBuildOrderDeadlock()
     
 	int supplyCost			= queue.getHighestPriorityItem().metaType.supplyRequired();
 	int supplyAvailable		= std::max(0, BWAPI::Broodwar->self()->supplyTotal() - BWAPI::Broodwar->self()->supplyUsed());
+
+	//BWAPI::Broodwar->printf("supplyAvailable: %d, supplyCost: %d", supplyAvailable, supplyCost);
 
 	// if we don't have enough supply and none is being built, there's a deadlock
 	if ((supplyAvailable < supplyCost) && !supplyInProgress)

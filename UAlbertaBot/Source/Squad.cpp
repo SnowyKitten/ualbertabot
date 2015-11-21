@@ -273,6 +273,23 @@ BWAPI::Position Squad::calcRegroupPosition()
 		}
 	}
 
+
+
+	// Randy: attempt to rally on cannon location, naively hope that by giving cannon location perhaps
+	// units will just stand near it without going crazy
+	// get all units and iterate through it to look for the first cannon, for simplicity
+	for (BWAPI::UnitInterface* unit : BWAPI::Broodwar->self()->getUnits()){
+		if (unit->getType().isDetector() && unit->getType().isBuilding()){
+			// if we still only have the default rally, instead rally to a cannon
+			if ((regroup == BWAPI::Position(0, 0))){
+				return unit->getPosition();
+			} else{ //if we already have a rally go through to the rest of the code
+				break;
+			}
+		}
+	}
+
+	// this checks if we have no rally, keep this incase we have no alive cannons
 	if (regroup == BWAPI::Position(0,0))
 	{
 		return BWTA::getRegion(BWTA::getStartLocation(BWAPI::Broodwar->self())->getTilePosition())->getCenter();

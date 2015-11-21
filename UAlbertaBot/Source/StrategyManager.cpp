@@ -170,6 +170,10 @@ const MetaPairVector StrategyManager::getBuildOrderGoal()
 	{
 		return getProtossDragoonsBuildOrderGoal();
 	}
+	else if (Config::Strategy::StrategyName == "Randy")
+	{
+		return getRandyBuildOrderGoal();
+	}
     else if (Config::Strategy::StrategyName == "Terran_MarineRush")
 	{
 		return getTerranBuildOrderGoal();
@@ -185,6 +189,80 @@ const MetaPairVector StrategyManager::getBuildOrderGoal()
 
     return MetaPairVector();
 }
+
+const MetaPairVector StrategyManager::getRandyBuildOrderGoal() const
+{
+	{
+		// the goal to return
+		MetaPairVector goal;
+
+		int numDragoons = BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Dragoon);
+		int numProbes = BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Probe);
+		int numNexusCompleted = BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Nexus);
+		int numNexusAll = BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Nexus);
+		int numCyber = BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Cybernetics_Core);
+		int numCannon = BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Protoss_Photon_Cannon);
+
+		int amount_wanted = 3;
+		if (numDragoons > 12){
+			amount_wanted = 4;
+		} else if (numDragoons > 16){
+			amount_wanted = 6;
+		}
+		else if (numDragoons > 24){
+			amount_wanted = 8;
+		}
+		int dragoonsWanted = numDragoons > 0 ? numDragoons + amount_wanted : 2;
+
+		int pylonsWanted = 0;
+		if (BWAPI::Broodwar->self()->supplyUsed() + 8 >= BWAPI::Broodwar->self()->supplyTotal())
+		{
+			pylonsWanted = dragoonsWanted/4 + 1;
+		}
+
+		if (numDragoons > 8){
+			goal.push_back(MetaPair(BWAPI::UpgradeTypes::Singularity_Charge, 1));
+		}
+
+
+		if (InformationManager::Instance().enemyHasCloakedUnits())
+		{
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Robotics_Facility, 1));
+
+			if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Robotics_Facility) > 0)
+			{
+				goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Observatory, 1));
+			}
+			if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Observatory) > 0)
+			{
+				goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Observer, 1));
+			}
+		}
+		else
+		{
+			if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Robotics_Facility) > 0)
+			{
+				goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Observatory, 1));
+			}
+
+			if (BWAPI::Broodwar->self()->completedUnitCount(BWAPI::UnitTypes::Protoss_Observatory) > 0)
+			{
+				goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Observer, 1));
+			}
+		}
+
+		if (expandProtossZealotRush())
+		{
+			goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Nexus, numNexusAll + 1));
+		}
+
+		//goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Pylon, pylonsWanted));
+		goal.push_back(MetaPair(BWAPI::UnitTypes::Protoss_Dragoon, dragoonsWanted));
+
+		return goal;
+	}
+}
+
 
 const MetaPairVector StrategyManager::getProtossDragoonsBuildOrderGoal() const
 {

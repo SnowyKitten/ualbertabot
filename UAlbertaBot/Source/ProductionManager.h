@@ -33,6 +33,8 @@ class ProductionManager
 
 	bool						initialBuildSet;
 
+	int                         time_check = 0;
+
 	std::map<char, MetaType>	typeCharMap;
 	std::vector<MetaPair>       searchGoal;
 

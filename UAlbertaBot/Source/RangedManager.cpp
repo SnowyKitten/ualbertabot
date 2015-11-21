@@ -67,12 +67,13 @@ void RangedManager::kiteTarget(BWAPI::UnitInterface* rangedUnit, BWAPI::UnitInte
 	}
 
 	// determine whether the target can be kited
+	/*
 	if (range <= target->getType().groundWeapon().maxRange())
 	{
 		// if we can't kite it, there's no point
 		smartAttackUnit(rangedUnit, target);
 		return;
-	}
+	}*/
 
 	double		minDist(64);
 	bool		kite(true);
